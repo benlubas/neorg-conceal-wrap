@@ -25,7 +25,7 @@ module.load = function()
         callback = function(ev)
             vim.api.nvim_set_option_value(
                 "formatexpr",
-                "v:lua.require'neorg.modules.external.conceal_wrap.module'.public.format()",
+                "v:lua.require'neorg.modules.external.conceal-wrap.module'.public.format()",
                 { buf = ev.buf }
             )
         end,
