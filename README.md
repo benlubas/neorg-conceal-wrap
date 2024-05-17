@@ -19,7 +19,7 @@ There is no configuration. `:h textwidth` is used as the target width of a line.
 ## Usage
 
 This plugin overwrites the `formatexpr` for `.norg` buffers, so formatting is applied with the `gq`
-mapping. see `:h 'formatexpr'` and `:h gq` for details here. TL;DR: use `gq<text object>` to format
+mapping. see `:h 'formatexpr'` and `:h gq` for details. TL;DR: use `gq<text object>` to format
 the text object.
 
 Formatting in insert mode falls back to normal nvim formatting. This is for a few reasons I guess,
