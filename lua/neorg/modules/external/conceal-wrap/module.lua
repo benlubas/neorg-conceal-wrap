@@ -8,7 +8,7 @@
 local neorg = require("neorg.core")
 local modules, log = neorg.modules, neorg.log
 
-local module = modules.create("external.conceal_wrap")
+local module = modules.create("external.conceal-wrap")
 
 module.setup = function()
     return {
