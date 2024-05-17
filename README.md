@@ -2,7 +2,7 @@
 
 Wrap lines based on their concealed width instead of their unconcealed width.
 
-![image](https://github.com/benlubas/neorg-conceal-wrap/assets/56943754/97dffe9b-305f-4fdc-bff5-f9b59d519ede)
+![image](https://github.com/benlubas/neorg-conceal-wrap/assets/56943754/34900a49-7f4b-45e5-ba35-2fbb980c8e88)
 
 ---
 
