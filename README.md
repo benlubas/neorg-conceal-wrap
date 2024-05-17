@@ -1,2 +1,3 @@
 # neorg-conceal-wrap
-Wrap lines based on their concealed width
+
+Wrap lines based on their concealed width.
