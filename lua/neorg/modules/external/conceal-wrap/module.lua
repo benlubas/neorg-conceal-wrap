@@ -36,8 +36,8 @@ module.config.public = {}
 
 ---take an index, and a list that represents lines, and return the real row and column of that
 ---index. Returns nil when i is out of range
----@param lines string[]
----@param i number
+---@param lines string[] the lines with their leading white space removed
+---@param i number 0 based index
 ---@return {[1]: number, [2]: number}
 module.private.index_to_rc = function(lines, i)
     local remaining_index = i
@@ -47,13 +47,16 @@ module.private.index_to_rc = function(lines, i)
         end
         remaining_index = remaining_index - line:len() - 1
     end
+    log.error(
+        "[neorg-conceal-wrap] index out of range in `index_to_rc` (this shouldn't ever happen, please open a bug)."
+    )
     return { -1, -1 }
 end
 
 ---take a row, col tuple and return the index into a string of lines
 ---@param lines string[]
 ---@param pos {[1]: number, [2]: number}
----@return number
+---@return number 0 based index into the string
 module.private.rc_to_index = function(lines, pos)
     local idx = 0
     for i = 1, pos[1] do
@@ -73,7 +76,7 @@ module.public.format = function()
     if vim.api.nvim_get_mode().mode == "i" then
         -- Returning 1 will tell nvim to fallback to the normal format method (which is capable of
         -- handling insert mode much better than we can currently)
-        -- TODO: I think the issue might be that we remove blank lines from the end when in insert
+        -- TODO: I think the issue might be that we remove blank spaces from the end when in insert
         -- mode, which causes problems
         return 1
     end
@@ -96,6 +99,7 @@ module.public.format = function()
         og_lines = vim.iter(og_lines)
             :map(function(l)
                 local ret = string.gsub(l, "^%s+", "")
+                ret = string.gsub(ret, "%s+$", "")
                 return ret
             end)
             :totable()
@@ -108,8 +112,7 @@ module.public.format = function()
             local e = module.private.index_to_rc(og_lines, col_index + #line - 1)
             s = { s[1] + current_row - 1, s[2] + #leading_white_space }
             e = { e[1] + current_row - 1, e[2] + #leading_white_space }
-            local visible_width, next_cutoff_rc =
-                module.private.visible_text_width(buf, s, e, width, leading_white_space)
+            local visible_width, next_cutoff_rc = module.private.visible_text_width(buf, s, e, width)
             local next_index =
                 module.private.rc_to_index(og_lines, { next_cutoff_rc[1] - current_row + 1, next_cutoff_rc[2] })
             if visible_width <= width then
@@ -159,9 +162,8 @@ end
 ---@param start {[1]: number, [2]: number}
 ---@param _end {[1]: number, [2]: number}
 ---@param target number
----@param leading_white_space string
 ---@return number, {[1]: number, [2]: number}
-module.private.visible_text_width = function(buf, start, _end, target, leading_white_space)
+module.private.visible_text_width = function(buf, start, _end, target)
     -- offset x by inline virtual text
     local width = 0
     -- track positions that are concealed by extmarks
@@ -182,10 +184,9 @@ module.private.visible_text_width = function(buf, start, _end, target, leading_w
     local best_target = start
     for r = start[1], _end[1] do
         local line = vim.api.nvim_buf_get_lines(buf, r, r + 1, false)[1]
-        -- local clean_line = line:gsub("^%s+", "")
-        -- local line_len = clean_line:len()
-        local start_c = #leading_white_space
-        local end_c = line:len() - 1
+        local leading_white_space = line:match("^%s*")
+        local start_c = #leading_white_space + 1
+        local end_c = line:len()
         if r == start[1] then
             start_c = start[2]
         end
@@ -212,7 +213,6 @@ module.private.visible_text_width = function(buf, start, _end, target, leading_w
                 best_target = { r, c }
             end
         end
-        width = width + 1
     end
     width = width - 1
     return width, best_target
