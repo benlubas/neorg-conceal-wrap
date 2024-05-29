@@ -90,6 +90,9 @@ module.public.format = function()
         local new_lines = {}
 
         local width = vim.bo.textwidth
+        if width == 0 then
+            width = 80 -- this is the value the built-in formatter defaults to when tw=0
+        end
 
         -- account for breakindent
         local indent = vim.fn.eval(vim.bo.indentexpr)
