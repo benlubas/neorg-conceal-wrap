@@ -3,6 +3,10 @@
     title: Hard wrap text based on it's concealed width
     ---
 
+    Features:
+    - Avoid joining text into headers
+    - Avoid joining list items
+
 --]]
 
 local neorg = require("neorg.core")
@@ -80,21 +84,69 @@ module.public.format = function()
         -- mode, which causes problems
         return 1
     end
+    local buf = vim.api.nvim_get_current_buf()
+    local current_row = vim.v.lnum - 1
+
+    -- group the lines by header/list items, etc..
+    local groups = {}
+    local next_group = {}
+    local lines = vim.api.nvim_buf_get_lines(buf, current_row, current_row + vim.v.count, true)
+    for i, line in ipairs(lines) do
+        local ln = i + current_row - 1
+        if line:match("^%s*%*+%s") then
+            -- this is a header, it get's it's own group
+            table.insert(groups, next_group)
+            next_group = {}
+            table.insert(groups, { ln })
+        elseif line:match("^%s*%-+%s") then
+            -- this is a list item, don't join the group above, but allow lines below to join
+            table.insert(groups, next_group)
+            next_group = { ln }
+        elseif line:match("^%s*$") then
+            -- this is a blank line, break the group
+            table.insert(groups, next_group)
+            next_group = {}
+        else
+            table.insert(next_group, ln)
+        end
+    end
+    table.insert(groups, next_group)
+
+    local offset = 0
+    for _, group in ipairs(groups) do
+        if #group == 0 then
+            goto continue
+        end
+        module.private.join_lines(buf, group[1] + offset, group[#group] + 1 + offset)
+        local new_line_len = module.private.format_joined_line(buf, group[1] + offset)
+        offset = offset + (new_line_len - #group)
+        ::continue::
+    end
+
+    -- module.private.join_lines(buf, current_row, current_row + vim.v.count)
+    -- module.private.format_joined_line(buf, current_row)
+
+    return 0
+end
+
+---Format a single line that's been joined
+---@param buf number
+---@param line_idx number 0 based line index
+---@return number lines the number of lines the formatted text takes up
+module.private.format_joined_line = function(buf, line_idx)
     local ok, err = pcall(function()
-        local buf = vim.api.nvim_get_current_buf()
-        local current_row = vim.v.lnum - 1
-        ---kinda like a byte index, It's just how far we are in the string of text.
-        local col_index = 0
-        module.private.join_lines(buf, current_row, current_row + vim.v.count)
-        local line = vim.api.nvim_buf_get_lines(buf, current_row, current_row + 1, false)[1]
+        local line = vim.api.nvim_buf_get_lines(buf, line_idx, line_idx + 1, false)[1]
         local new_lines = {}
 
+        ---kinda like a byte index, It's just how far we are in the string of text.
+        local col_index = 0
         local width = vim.bo.textwidth
         if width == 0 then
             width = 80 -- this is the value the built-in formatter defaults to when tw=0
         end
 
         -- account for breakindent
+        vim.v.lnum = line_idx + 1
         local indent = vim.fn.eval(vim.bo.indentexpr)
 
         local left_offset = indent
@@ -102,7 +154,7 @@ module.public.format = function()
         width = math.max(width - left_offset, 5) -- arbitrary 5 char limit
         while #line > 0 do
             local visible_width, next_cutoff_index =
-                module.private.visible_text_width(buf, current_row, col_index, col_index + #line, width)
+                module.private.visible_text_width(buf, line_idx, col_index, col_index + #line, width)
 
             if visible_width <= width then
                 table.insert(new_lines, line)
@@ -136,13 +188,13 @@ module.public.format = function()
             end)
             :totable()
         -- Now we have new lines, have to write them to the buffer
-        vim.api.nvim_buf_set_lines(buf, current_row, current_row + 1, false, new_lines)
-        return 0
+        vim.api.nvim_buf_set_lines(buf, line_idx, line_idx + 1, false, new_lines)
+        return #new_lines
     end)
     if not ok then
         log.error(err)
     end
-    return 0
+    return err
 end
 
 ---Compute the "visible" width of the given range, that is the width of the line when conceal is active.
