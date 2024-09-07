@@ -54,7 +54,7 @@ module.config.private = {}
 ---italic section. so it would be okay to break there. Then we also have to consider when they touch
 ---against new lines though, that's annoying too. I think I will just remove them from breakat for
 ---now then.
-module.config.private.no_break_at = { "/", ",", "!", "-", "*" }
+module.config.private.no_break_at = { "/", ",", "!", "-", "*", ":" }
 
 ---join lines defined by the 0 index start and end into a single line. Lines are separated by single
 ---spaces.
@@ -94,7 +94,7 @@ module.public.format = function()
     for i, line in ipairs(lines) do
         local ln = i + current_row - 1
         if line:match("^%s*%*+%s") then
-            -- this is a header, it get's it's own group
+            -- this is a header, it gets its own group
             table.insert(groups, next_group)
             next_group = {}
             table.insert(groups, { ln })
@@ -232,18 +232,25 @@ module.private.visible_text_width = function(buf, line_idx, start_col, end_col, 
     local best_target = start_col
     -- col indexing is 0 based
     for c = start_col, end_col - 1 do
-        width = width + 1
-        local res = vim.treesitter.get_captures_at_pos(buf, line_idx, c)
-        for _, hl in ipairs(res) do
-            if hl.capture == "conceal" and not extmark_concealed[c + 1] then
-                width = width - 1
-                break
+        local visible = true
+        if extmark_concealed[c + 1] then
+            visible = false
+        else
+            local res = vim.treesitter.get_captures_at_pos(buf, line_idx, c)
+            for _, hl in ipairs(res) do
+                if hl.capture == "conceal" then
+                    visible = false
+                    break
+                end
             end
         end
+        if visible then
+            width = width + 1
 
-        -- target + 1 b/c if the lines ends where "d" in "word " is at `target` then we should break at the " "
-        if width <= target + 1 then
-            best_target = c
+            -- target + 1 b/c if the lines ends where "d" in "word " is at `target` then we should break at the " "
+            if width <= target + 1 then
+                best_target = c
+            end
         end
     end
     return width, best_target
