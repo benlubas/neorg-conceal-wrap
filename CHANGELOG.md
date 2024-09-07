@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/benlubas/neorg-conceal-wrap/compare/v1.0.0...v1.0.1) (2024-09-07)
+
+
+### Bug Fixes
+
+* don't break at `:` ([#6](https://github.com/benlubas/neorg-conceal-wrap/issues/6)) ([5138c85](https://github.com/benlubas/neorg-conceal-wrap/commit/5138c85a19e4135dc0aae22893b6d756229adc4e))
+
 ## 1.0.0 (2024-06-30)
 
 
