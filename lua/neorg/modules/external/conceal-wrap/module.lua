@@ -149,15 +149,18 @@ module.private.format_joined_line = function(buf, line_idx)
         vim.v.lnum = line_idx + 1
         local indent = vim.fn.eval(vim.bo.indentexpr)
 
-        local is_list = false
-        if vim.tbl_contains({"-", "~"}, line:sub(1, 1)) then
-            is_list = true
+        local extra_indent = 0
+        local match = line:match("^%s*([-~]+)")
+        print("match:", match)
+        if match then
+            extra_indent = #({match})[1] + 1
+            print("extra_indent:", extra_indent)
         end
         local first = true
         width = math.max(width - indent, 5) -- arbitrary 5 char limit
         while #line > 0 do
-            if is_list and not first then
-                width = math.max(width - indent - 2, 5)
+            if not first then
+                width = math.max(width - indent - extra_indent, 5)
             end
             first = false
             local visible_width, next_cutoff_index =
@@ -192,8 +195,8 @@ module.private.format_joined_line = function(buf, line_idx)
 
         new_lines = vim.iter(new_lines):enumerate()
             :map(function(i, l)
-                if is_list and i > 1 then
-                    l = l:gsub("^%s*", (" "):rep(indent + 2))
+                if i > 1 then
+                    l = l:gsub("^%s*", (" "):rep(indent + extra_indent))
                 else
                     l = l:gsub("^%s*", (" "):rep(indent))
                 end
