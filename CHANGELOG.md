@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/benlubas/neorg-conceal-wrap/compare/v1.0.1...v1.0.2) (2025-10-17)
+
+
+### Bug Fixes
+
+* next line indent for lists ([#9](https://github.com/benlubas/neorg-conceal-wrap/issues/9)) ([d52f9a2](https://github.com/benlubas/neorg-conceal-wrap/commit/d52f9a215bfcb99175f3f22b37faf67b4ef987b7))
+* the dumb fix ([447a76e](https://github.com/benlubas/neorg-conceal-wrap/commit/447a76e4abf07ccc5eeb8cc3ee5fae241b434f5a))
+
 ## [1.0.1](https://github.com/benlubas/neorg-conceal-wrap/compare/v1.0.0...v1.0.1) (2024-09-07)
 
 
