@@ -149,10 +149,17 @@ module.private.format_joined_line = function(buf, line_idx)
         vim.v.lnum = line_idx + 1
         local indent = vim.fn.eval(vim.bo.indentexpr)
 
-        local left_offset = indent
-
-        width = math.max(width - left_offset, 5) -- arbitrary 5 char limit
+        local is_list = false
+        if vim.tbl_contains({"-", "~"}, line:sub(1, 1)) then
+            is_list = true
+        end
+        local first = true
+        width = math.max(width - indent, 5) -- arbitrary 5 char limit
         while #line > 0 do
+            if is_list and not first then
+                width = math.max(width - indent - 2, 5)
+            end
+            first = false
             local visible_width, next_cutoff_index =
                 module.private.visible_text_width(buf, line_idx, col_index, col_index + #line, width)
 
@@ -180,9 +187,13 @@ module.private.format_joined_line = function(buf, line_idx)
             line = line:sub(i + 1)
         end
 
-        new_lines = vim.iter(new_lines)
-            :map(function(l)
-                l = l:gsub("^%s*", (" "):rep(indent))
+        new_lines = vim.iter(new_lines):enumerate()
+            :map(function(i, l)
+                if is_list and i > 1 then
+                    l = l:gsub("^%s*", (" "):rep(indent + 2))
+                else
+                    l = l:gsub("^%s*", (" "):rep(indent))
+                end
                 l = l:gsub("%s+$", "")
                 return l
             end)
