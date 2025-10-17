@@ -25,7 +25,7 @@ module.load = function()
 
     module.private.break_at = vim.iter(vim.split(vim.o.breakat, ""))
         :filter(function(x)
-            return not vim.list_contains(module.config.private.no_break_at, x)
+            return not vim.tbl_contains(module.config.private.no_break_at, x)
         end)
         :totable()
 
@@ -173,7 +173,10 @@ module.private.format_joined_line = function(buf, line_idx)
 
             local i = #chunk
             while i > 0 do
+                -- NOTE: I'm pretty sure I'm not doing this break logic correctly. putting these
+                -- things on the next line when I shouldn't
                 if vim.list_contains(module.private.break_at, chunk:sub(i, i)) then
+                    i = i - 1
                     break
                 end
                 i = i - 1
